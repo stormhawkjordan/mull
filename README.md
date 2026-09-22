@@ -136,4 +136,4 @@ See [`BUILDING.md`](BUILDING.md) for code signing and update-feed configuration.
 
 ## License
 
-See `package.json` (ISC). *A `LICENSE` file hasn't been added to this repo yet — add one before publishing if you want the license to be unambiguous to people who clone it.*
+[GPL-3.0-or-later](LICENSE). You're free to use, study, modify, and redistribute Mull — but if you redistribute it (modified or not), it has to stay open source under the same license, with credit to the original project. You can't take it, close the source, and ship it as your own proprietary product.
