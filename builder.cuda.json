@@ -1,0 +1,58 @@
+{
+  "appId": "com.mull.app",
+  "productName": "Mull",
+  "directories": {
+    "buildResources": "build",
+    "output": "dist"
+  },
+  "asarUnpack": [
+    "node_modules/node-llama-cpp/**",
+    "node_modules/@node-llama-cpp/**",
+    "node_modules/@fugood/**",
+    "node_modules/pdfjs-dist/**"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/icon.png"
+  },
+  "npmRebuild": false,
+  "files": [
+    "*.js",
+    "index.html",
+    "styles.css",
+    "vendor/**/*",
+    "build/icon.png",
+    "!builder*.json",
+    "!**/node_modules/@node-llama-cpp/win-arm64/**",
+    "!**/node_modules/@fugood/node-whisper-wasm/**",
+    "!**/node_modules/@fugood/node-whisper-win32-x64-cuda/**",
+    "!**/node_modules/@fugood/node-whisper-win32-x64-vulkan/**",
+    "!**/node_modules/pdfjs-dist/web/**",
+    "!**/node_modules/pdfjs-dist/types/**",
+    "!**/node_modules/pdfjs-dist/build/**"
+  ],
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Mull",
+    "deleteAppDataOnUninstall": false,
+    "artifactName": "Mull-Setup-${version}-NVIDIA.exe",
+    "include": "build/installer.nsh",
+    "installerSidebar": "installerSidebar.bmp",
+    "uninstallerSidebar": "installerSidebar.bmp",
+    "installerHeader": "installerHeader.bmp",
+    "runAfterFinish": true,
+    "menuCategory": false,
+    "uninstallDisplayName": "Mull"
+  }
+}

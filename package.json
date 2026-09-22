@@ -1,0 +1,30 @@
+{
+  "name": "mull",
+  "version": "1.2.0",
+  "description": "Mull: chat with AI models that run entirely on your PC",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win dir -c builder.slim.json",
+    "dist": "electron-builder --win nsis -c builder.slim.json",
+    "dist:cuda": "electron-builder --win nsis -c builder.cuda.json",
+    "dist:portable": "electron-builder --win portable -c builder.portable.json"
+  },
+  "keywords": [],
+  "author": "Mull",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@fugood/whisper.node": "^1.2.0-rc.0",
+    "mammoth": "^1.12.3",
+    "node-llama-cpp": "^3.21.1",
+    "pdfjs-dist": "^6.3.289"
+  },
+  "devDependencies": {
+    "@highlightjs/cdn-assets": "^11.12.0",
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
+    "katex": "^0.18.7"
+  },
+  "productName": "Mull"
+}

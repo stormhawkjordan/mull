@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- style-src needs 'unsafe-inline': KaTeX (math rendering) positions glyphs with inline style="" attributes.
+     Everything script-related stays locked to 'self' with no 'unsafe-inline'/'unsafe-eval'. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mull</title>
+<link rel="stylesheet" href="vendor/katex.min.css">
+<link rel="stylesheet" href="vendor/github-dark.min.css" id="hl-dark">
+<link rel="stylesheet" href="vendor/github.min.css" id="hl-light" disabled>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="menubar">
+  <button data-menu="file">File</button>
+  <button data-menu="edit">Edit</button>
+  <button data-menu="view">View</button>
+  <button data-menu="models">Models</button>
+  <button data-menu="prefs">Preferences</button>
+  <button data-menu="help">Help</button>
+</div>
+<div id="app">
+  <aside id="side">
+    <div class="brand"><span class="logo"><i data-icon="mark" data-size="20"></i></span><span>Mull</span><span class="ver" id="verTag"></span></div>
+    <div class="tabs">
+      <button data-tab="chats" class="on">Chats</button>
+      <button data-tab="discover">Models</button>
+      <button data-tab="models">My Models</button>
+      <button data-tab="favorites">Favorites</button>
+    </div>
+    <section id="tab-chats">
+      <button id="newChat" class="primary wide"><i data-icon="plus"></i><span>New chat</span></button>
+      <div class="search-wrap"><i data-icon="search" data-size="14"></i><input id="chatSearch" type="search" placeholder="Search chats…" autocomplete="off"></div>
+      <div id="chatList" class="list"></div>
+    </section>
+    <section id="tab-discover" hidden>
+      <div class="note">Browse and download AI models from Hugging Face.</div>
+      <button id="discoverGo" class="primary wide"><i data-icon="download"></i><span>Search all models</span></button>
+      <div class="chips" id="discoverChips"></div>
+    </section>
+    <section id="tab-models" hidden>
+      <div class="model-actions">
+        <button id="getModels" class="primary wide"><i data-icon="download"></i><span>Get models</span></button>
+        <button id="importBtn" class="icon-btn" title="Import .gguf files or scan a folder"><i data-icon="plus" data-size="16"></i></button>
+      </div>
+      <button id="dlChip" class="dlchip" hidden></button>
+      <div id="models" class="list"></div>
+      <div class="note">Tip: drop .gguf files anywhere in this window.</div>
+    </section>
+    <section id="tab-favorites" hidden>
+      <div id="favModels" class="list"></div>
+    </section>
+    <div id="updateBanner" class="update-banner" hidden></div>
+    <div class="side-foot">
+      <button id="openLibrary" class="rail-btn" title="Personas and saved prompts"><i data-icon="book" data-size="17"></i><span>Library</span></button>
+      <button id="openCompare" class="rail-btn" title="Send one prompt to two models"><i data-icon="columns" data-size="17"></i><span>Compare</span></button>
+      <button id="openSettings" class="rail-btn" title="Settings"><i data-icon="sliders" data-size="17"></i><span>Settings</span></button>
+    </div>
+  </aside>
+
+  <main>
+    <header id="top">
+      <button id="modelChip" class="chip" title="Choose a model">
+        <span id="dot" class="dot"></span><span id="chipText">No model loaded</span>
+      </button>
+      <span id="pill" class="pill" data-state="idle">Idle</span>
+      <span id="tpsBadge" class="tps-badge" hidden></span>
+      <button id="personaBtn" class="chip persona" title="Persona for this chat"><i data-icon="user" data-size="15"></i><span id="personaText">Default</span><i data-icon="chevron-down" data-size="14"></i></button>
+      <span class="spacer"></span>
+      <div id="ctxMeter" class="meter" title="Context window used" hidden>
+        <div class="track"><div class="fill" id="ctxFill"></div></div>
+        <span id="ctxText"></span>
+      </div>
+      <button id="eject" class="ghost" hidden>Eject</button>
+      <button id="netMode" class="ghost net-mode" title="Network access"></button>
+      <button id="openPalette" class="ghost" title="Command palette (Ctrl+K)"><i data-icon="command" data-size="15"></i></button>
+      <button id="toggleLog" class="ghost">Log</button>
+    </header>
+
+    <div id="stage">
+      <div id="chat"></div>
+      <div id="loader" hidden>
+        <div class="card">
+          <div class="l-title" id="lTitle">Loading model…</div>
+          <div class="bar"><div id="lFill" class="bar-fill"></div></div>
+          <div class="l-row"><span id="lPct">0%</span><span id="lElapsed">0.0s</span></div>
+          <ol class="steps" id="lSteps">
+            <li data-step="engine">Start engine</li>
+            <li data-step="model">Load weights</li>
+            <li data-step="context">Create context</li>
+            <li data-step="ready">Ready</li>
+          </ol>
+          <div class="l-msg" id="lMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <section id="logPanel" hidden>
+      <div class="log-head"><strong>Verbose log</strong><span class="spacer"></span><button id="logClear" class="ghost small">Clear</button><button id="logClose" class="ghost small">Hide</button></div>
+      <div id="logBody"></div>
+    </section>
+
+    <div id="docChips" class="doc-chips" hidden></div>
+    <form id="composer">
+      <div class="tools-col">
+        <button type="button" id="attach" class="icon-btn" title="Attach documents (PDF, DOCX, text)" aria-label="Attach documents"><i data-icon="paperclip" data-size="18"></i></button>
+        <button type="button" id="toolsToggle" class="icon-btn" title="Let the model use tools (calculator, clock, files you allow)" aria-label="Tools"><i data-icon="wrench" data-size="18"></i></button>
+        <button type="button" id="mic" class="icon-btn" title="Dictate (works offline)" aria-label="Dictate"><i data-icon="mic" data-size="18"></i></button>
+      </div>
+      <textarea id="input" rows="1" placeholder="Load a model to start chatting…" disabled></textarea>
+      <button class="primary" id="go" disabled>Send</button>
+      <button type="button" id="stop" class="danger" hidden>Stop</button>
+    </form>
+    <div id="activity"><span id="actText">Ready when you are.</span><span id="actRight"></span></div>
+  </main>
+</div>
+
+<div id="settings" class="modal" hidden>
+  <div class="dialog">
+    <div class="d-head">
+      <strong>Settings</strong>
+      <select id="scopeSel" class="scope" hidden></select>
+      <span class="spacer"></span>
+      <button id="resetSettings" class="ghost small">Reset to defaults</button>
+      <button id="closeSettings" class="ghost"><i data-icon="x"></i></button>
+    </div>
+    <div class="d-tabs" id="sTabs"></div>
+    <div class="d-body" id="sBody"></div>
+    <div class="d-foot" id="sFoot" hidden>
+      <span>Model loading options changed.</span>
+      <button id="reloadModel" class="primary small">Reload model to apply</button>
+    </div>
+  </div>
+</div>
+
+<div id="browser" class="modal" hidden>
+  <div class="dialog wide-dialog">
+    <div class="d-head">
+      <strong>Get models</strong>
+      <span class="note-inline">Searches Hugging Face for GGUF models. Downloading is the only thing Mull uses the internet for.</span>
+      <span class="spacer"></span>
+      <button id="closeBrowser" class="ghost"><i data-icon="x"></i></button>
+    </div>
+    <form id="hfForm" class="hf-search">
+      <input id="hfQuery" type="search" placeholder="Search models, or paste a Hugging Face link (e.g. qwen3, llama 3.2, user/repo)" autocomplete="off">
+      <button class="primary" id="hfGo">Search</button>
+    </form>
+    <div class="chips" id="hfChips"></div>
+    <label class="hf-fit"><input type="checkbox" id="hfOnlyFits"> Only show models that will run on my computer</label>
+    <div class="d-body" id="hfBody"></div>
+    <div id="dlPanel" class="dl-panel" hidden></div>
+    <div class="d-foot plain">
+      <span>Saved to: <code id="dirText"></code></span>
+      <button id="dirChange" class="small">Change folder</button>
+    </div>
+  </div>
+</div>
+
+<div id="library" class="modal" hidden>
+  <div class="dialog wide-dialog">
+    <div class="d-head"><strong>Library</strong><span class="note-inline">Personas change how the model behaves. Saved prompts are reusable; type / in the message box to insert one.</span><span class="spacer"></span><button id="closeLibrary" class="ghost"><i data-icon="x"></i></button></div>
+    <div class="d-tabs" id="libTabs"></div>
+    <div class="d-body" id="libBody"></div>
+  </div>
+</div>
+
+<div id="compare" class="modal" hidden>
+  <div class="dialog cmp-dialog">
+    <div class="d-head"><strong>Compare models</strong><span class="note-inline">Runs the same prompt on two models, one after the other, so it fits in memory.</span><span class="spacer"></span><button id="closeCompare" class="ghost"><i data-icon="x"></i></button></div>
+    <div class="cmp-top">
+      <textarea id="cmpPrompt" rows="2" placeholder="Type a prompt to send to both models…"></textarea>
+      <div class="cmp-actions">
+        <label class="cmp-eject"><input type="checkbox" id="cmpEject" checked> Eject the chat model first (frees memory)</label>
+        <button id="cmpRun" class="primary">Run comparison</button>
+        <button id="cmpStop" class="danger" hidden>Stop</button>
+      </div>
+    </div>
+    <div class="cmp-cols">
+      <section class="cmp-col" id="cmpColA"><select class="cmp-sel" id="cmpSelA"></select><div class="cmp-status"></div><div class="cmp-out"></div><div class="cmp-stats"></div></section>
+      <section class="cmp-col" id="cmpColB"><select class="cmp-sel" id="cmpSelB"></select><div class="cmp-status"></div><div class="cmp-out"></div><div class="cmp-stats"></div></section>
+    </div>
+  </div>
+</div>
+
+<div id="minfo" class="modal" hidden>
+  <div class="dialog info-dialog">
+    <div class="d-head"><strong id="miTitle">Model details</strong><span class="spacer"></span><button id="closeInfo" class="ghost"><i data-icon="x"></i></button></div>
+    <div class="d-body" id="miBody"></div>
+  </div>
+</div>
+
+<div id="wizard" class="modal" hidden>
+  <div class="dialog wiz">
+    <div class="wiz-dots" id="wizDots"></div>
+    <div class="wiz-body" id="wizBody"></div>
+    <div class="wiz-foot"><button id="wizSkip" class="ghost">Skip for now</button><span class="spacer"></span><button id="wizBack" class="small">Back</button><button id="wizNext" class="primary">Next</button></div>
+  </div>
+</div>
+
+<div id="palette" class="modal palette-modal" hidden>
+  <div class="dialog palette-dialog">
+    <div class="palette-head"><i data-icon="search" data-size="16"></i><input id="paletteInput" type="text" placeholder="Search chats, messages, models, personas, actions…" autocomplete="off"></div>
+    <div class="d-body palette-body" id="paletteList"></div>
+    <div class="palette-foot"><span>↑↓ to move</span><span>Enter to select</span><span>Esc to close</span></div>
+  </div>
+</div>
+
+<div id="menu" class="menu" hidden></div>
+<div id="toast" hidden></div>
+<script src="vendor/katex.min.js"></script>
+<script src="vendor/highlight.min.js"></script>
+<script src="icons.js"></script>
+<script src="markdown.js"></script>
+<script src="renderer.js"></script>
+<script src="downloader.js"></script>
+<script src="library.js"></script>
+<script src="docsui.js"></script>
+<script src="compare.js"></script>
+<script src="voice.js"></script>
+<script src="wizard.js"></script>
+<script src="palette.js"></script>
+<script src="menubar.js"></script>
+<script src="extras.js"></script>
+</body>
+</html>
